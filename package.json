@@ -1,0 +1,16 @@
+{
+  "name": "combined-bots",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "nuker": "node nuker.js",
+    "spammer": "node spammer.js"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^2.4.3",
+    "axios": "^1.6.2",
+    "discord.js": "^14.14.1",
+    "express": "^4.18.2"
+  }
+}
