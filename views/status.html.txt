@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="30">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kyn's Bots Status</title>
+    <style>
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+        img {
+            width: 150px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+        }
+        .status {
+            margin: 20px 0;
+            font-size: 1.5em;
+        }
+        .online {
+            color: #00FF00;
+        }
+        .buttons a {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+        }
+        .nuker {
+            background-color: #28a745;
+        }
+        .spammer {
+            background-color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <img src="/tupac.png" alt="Bot Logo">
+    <h1>🛰️ Kyn's Bots Status</h1>
+
+    <div class="status">
+        Nuker Bot: <span class="online">✅ Online</span>
+    </div>
+
+    <div class="status">
+        Spammer Bot: <span class="online">✅ Online</span>
+    </div>
+
+    <div class="buttons">
+        <a href="https://discord.com/oauth2/authorize?client_id=1362858715526598968&permissions=8&scope=bot%20applications.commands" class="nuker" target="_blank">🛡️ Invite Nuker Bot</a>
+        <a href="https://discord.com/oauth2/authorize?client_id=1362803485325922424&permissions=8&scope=bot%20applications.commands" class="spammer" target="_blank">💬 Invite Spammer Bot</a>
+    </div>
+</body>
+</html>
