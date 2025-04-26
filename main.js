@@ -1,4 +1,16 @@
 const { fork } = require('child_process');
+const express = require('express'); // <-- Add express
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Start a small web server for uptime monitoring
+app.get('/', (req, res) => {
+  res.send('Bots are alive! 🚀');
+});
+
+app.listen(PORT, () => {
+  console.log(`Uptime server running on port ${PORT}`);
+});
 
 console.log("Starting both bots...");
 
