@@ -2,7 +2,7 @@ require('dotenv').config(); // Load env vars (for local use)
 
 module.exports = {
     general: {
-        commandPrefix: '=',
+        commandPrefix: '°',
         uptimePort: 3000,
         selfPingInterval: 300000,
         reconnectInterval: 60000,
@@ -35,7 +35,7 @@ module.exports = {
             messageDeleteDelay: 500,
             webhookCreateDelay: 500,
             serverEditDelay: 2000,
-            spamRoundDelay: 1000,
+            spamRoundDelay: 500,
             initialOperationDelay: 3000
         },
         behavior: {
@@ -105,7 +105,7 @@ module.exports = {
         rateLimitProtection: true,
         emergencyStopCommand: '!abort',
         adminOverrideIds: ['1284886248330231891'],
-        maxChannelsToCreate: 100,      // <-- added to avoid errors
+        maxChannelsToCreate: 30,      // <-- added to avoid errors
         maxWebhooksToCreate: 50         // <-- added to avoid errors
     }
 };
