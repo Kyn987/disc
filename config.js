@@ -2,7 +2,7 @@ require('dotenv').config(); // Load env vars (for local use)
 
 module.exports = {
     general: {
-        commandPrefix: '°',
+        commandPrefix: '&',
         uptimePort: 3000,
         selfPingInterval: 300000,
         reconnectInterval: 60000,
