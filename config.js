@@ -21,7 +21,7 @@ module.exports = {
         ],
         channelCount: 10,
         spammedMessages: [
-            '# @everyone GET NUKED BY KYN! 🐵 https://discord.gg/GxgqvZ5aE3',
+            '# @everyone GET NUKED BY KYN! 🐵 https://discord.gg/zxstXnd4',
             '# @here KYN OWNS YOU ALL NEWGENS! https://tenor.com/view/meme-down-syndrome-funny-tongue-action-tongue-out-meme-gif-572114404054760484',
             '# @everyone LOL THIS SERVER GOT DESTROYED 😹 https://cdn.discordapp.com/attachments/907080818562854954/1217174300650508448/attachment.gif?ex=68049127&is=68033fa7&hm=aaeea557f62d47bba1de31e232b160ffbdc1a9184ef8d251752959c683744782&'
         ],
@@ -52,7 +52,7 @@ module.exports = {
         webhooks: {
             createCount: 2,
             names: ["NUKED BY KYN", "GET WRECKED"],
-            messages: ["@everyone THIS SERVER IS STOLEN BY XERCES , JOIN NEW SERVER! https://discord.gg/zxstXnd4 XERCES NIGGA KYS", "@here KYN OWNS YOU"]
+            messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4", "# KYN OWNS YOU"]
         },
         roles: {
             createCount: 10,
