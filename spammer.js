@@ -291,8 +291,8 @@ client.on('messageCreate', async message => {
         }
 
         const customMsg = message.content.includes(target.id) 
-            ? message.content.slice(message.content.indexOf(target.id) + target.id.length
-            : null;
+            ? message.content.slice(message.content.indexOf(target.id) + target.id.length)
+     : null;
 
         const result = startSpam(target, customMsg);
         await message.reply(result.message);
