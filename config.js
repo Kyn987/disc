@@ -65,12 +65,7 @@ module.exports = {
 
     spammer: {
     token: process.env.TOKEN_SPAMMER,
-    backupTokens: [
-        process.env.TOKEN_SPAMMER_2,
-        process.env.TOKEN_SPAMMER_3,
-        process.env.TOKEN_SPAMMER_4,
-        process.env.TOKEN_SPAMMER_5
-    ],
+    
         authorizedIds: ['1284886248330231891', '13', '13'],
         whitelistedIds: ['1284886248330231891', '12'],
         defaultSpamMessage: "# YOU'RE BEING SPAMMED BY KYN FAGT! GET LOST BOZO! https://cdn.discordapp.com/attachments/1243645226091020328/1320136219585155114/d68845f804446649d52eb4085678eb3c.gif",
