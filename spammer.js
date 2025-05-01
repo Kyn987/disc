@@ -174,36 +174,45 @@ function sleep(ms) {
 // =====================
 // COMMAND HANDLERS
 // =====================
+async function registerSlashCommands(token) {
+    try {
+        await new REST({ version: '10' }).setToken(token).put(
+            Routes.applicationCommands(client.user.id),
+            { body: [
+                new SlashCommandBuilder()
+                    .setName('dmspam')
+                    .setDescription('Start spamming a user')
+                    .addUserOption(o => o
+                        .setName('user')
+                        .setDescription('Target user')
+                        .setRequired(true))
+                    .addStringOption(o => o
+                        .setName('message')
+                        .setDescription('Custom message (optional)'))
+                    .toJSON(),
+                new SlashCommandBuilder()
+                    .setName('dmstop')
+                    .setDescription('Stop current spam')
+                    .toJSON(),
+                new SlashCommandBuilder()
+                    .setName('dmstatus')
+                    .setDescription('Show spam status')
+                    .toJSON(),
+                new SlashCommandBuilder()
+                    .setName('dmhelp')
+                    .setDescription('Show help menu')
+                    .toJSON()
+            ] }
+        );
+        console.log('Slash commands registered successfully.');
+    } catch (error) {
+        console.error('Failed to register slash commands:', error);
+    }
+}
+
 client.on('ready', async () => {
     console.log(`Spammer logged in as ${client.user.tag}`);
-    await new REST({ version: '10' }).setToken(spammer.token).put(
-        Routes.applicationCommands(client.user.id),
-        { body: [
-            new SlashCommandBuilder()
-                .setName('dmspam')
-                .setDescription('Start spamming a user')
-                .addUserOption(o => o
-                    .setName('user')
-                    .setDescription('Target user')
-                    .setRequired(true))
-                .addStringOption(o => o
-                    .setName('message')
-                    .setDescription('Custom message (optional)'))
-                .toJSON(),
-            new SlashCommandBuilder()
-                .setName('dmstop')
-                .setDescription('Stop current spam')
-                .toJSON(),
-            new SlashCommandBuilder()
-                .setName('dmstatus')
-                .setDescription('Show spam status')
-                .toJSON(),
-            new SlashCommandBuilder()
-                .setName('dmhelp')
-                .setDescription('Show help menu')
-                .toJSON()
-        ] }
-    );
+    await registerSlashCommands(client.token); // Use the active token
 });
 
 client.on('interactionCreate', async interaction => {
@@ -321,7 +330,7 @@ client.on('messageCreate', async message => {
 });
 
 // =====================
-// NEW: MULTI-TOKEN SUPPORT (APPENDED)
+// MULTI-TOKEN SUPPORT (FIXED)
 // =====================
 let currentTokenIndex = 0;
 async function rotateToken() {
@@ -346,9 +355,13 @@ sendSpam = async function(target, customMsg) {
 
 // Initialize with first token
 if (config.spammer.tokens?.length > 0) {
-    client.login(config.spammer.tokens[0]).catch(console.error);
+    client.login(config.spammer.tokens[0])
+        .then(() => console.log(`Logged in with token 1`))
+        .catch(console.error);
 } else {
-    client.login(config.spammer.token).catch(console.error);
+    client.login(config.spammer.token)
+        .then(() => console.log(`Logged in with single token`))
+        .catch(console.error);
 }
 
 // =====================
