@@ -51,7 +51,7 @@ function generateSpamMessage(target) {
         let msg = spammer.bypass.messageVariants[
             Math.floor(Math.random() * spammer.bypass.messageVariants.length)
         ].replace('{user}', target?.toString() || '');
-        
+
         if (spammer.bypass.addRandomText) {
             msg += ' ' + Math.random().toString(36).substring(2, 8);
         }
@@ -124,8 +124,8 @@ async function sendSpam(target, customMsg = null) {
 function startSpam(target, customMsg = null) {
     if (state.active) return { success: false, message: '❌ Spam already running' };
     if (Date.now() - state.lastBlock < spammer.dm.cooldown) {
-        return { 
-            success: false, 
+        return {
+            success: false,
             message: `❌ Recently blocked. Wait ${Math.ceil((spammer.dm.cooldown - (Date.now() - state.lastBlock))/1000)}s`
         };
     }
@@ -238,7 +238,7 @@ client.on('interactionCreate', async interaction => {
                             { name: 'Active', value: state.active ? 'Yes' : 'No', inline: true },
                             { name: 'Target', value: state.target?.tag || 'None', inline: true },
                             { name: 'Messages Sent', value: state.count.toString(), inline: true },
-                            { name: 'Running Time', value: state.startTime ? 
+                            { name: 'Running Time', value: state.startTime ?
                                 `${Math.floor((Date.now() - state.startTime)/1000)}s` : 'Not running', inline: true }
                         )
                         .setColor(state.active ? '#FF0000' : '#00FF00')
@@ -257,7 +257,7 @@ client.on('interactionCreate', async interaction => {
                         { name: 'Chat Command', value: `\`${general.commandPrefix}dmspam @user [message]\`` }
                     )
                     .setFooter({ text: 'Spammer by KYN | GoldSociety' });
-                
+
                 await interaction.user.send({ embeds: [helpEmbed] })
                     .catch(() => interaction.followUp("❌ Couldn't send DM. Enable DMs!"));
                 await interaction.editReply('✅ Check your DMs for help!');
@@ -271,7 +271,7 @@ client.on('interactionCreate', async interaction => {
 
 // Legacy chat commands
 client.on('messageCreate', async message => {
-    if (!message.content.startsWith(general.commandPrefix) || 
+    if (!message.content.startsWith(general.commandPrefix) ||
         message.author.bot ||
         !spammer.authorizedIds.includes(message.author.id)) return;
 
@@ -280,9 +280,9 @@ client.on('messageCreate', async message => {
 
     // !dmspam @user [message]
     if (cmd === 'dmspam') {
-        const target = message.mentions.users.first() || 
+        const target = message.mentions.users.first() ||
                       (args[0]?.match(/^\d+$/) ? await client.users.fetch(args[0]).catch(() => null) : null);
-        
+
         if (!target) {
             return message.reply(`Usage: ${general.commandPrefix}dmspam @user [message]`);
         }
@@ -290,9 +290,9 @@ client.on('messageCreate', async message => {
             return message.reply('❌ Cannot spam whitelisted user');
         }
 
-        const customMsg = message.content.includes(target.id) 
+        const customMsg = message.content.includes(target.id)
             ? message.content.slice(message.content.indexOf(target.id) + target.id.length)
-     : null;
+            : null;
 
         const result = startSpam(target, customMsg);
         await message.reply(result.message);
@@ -314,10 +314,50 @@ client.on('messageCreate', async message => {
                 { name: `${general.commandPrefix}dmstop`, value: 'Stop spam' },
                 { name: 'Slash Commands', value: 'Also available as `/dmspam`, `/dmstop`' }
             );
-        
+
         await message.author.send({ embeds: [helpEmbed] })
             .catch(() => message.reply("❌ Enable DMs to see help!"));
     }
 });
 
-client.login(spammer.token).catch(console.error);
+// =====================
+// NEW: MULTI-TOKEN SUPPORT (APPENDED)
+// =====================
+let currentTokenIndex = 0;
+async function rotateToken() {
+    if (!config.spammer.tokens || config.spammer.tokens.length <= 1) return;
+    currentTokenIndex = (currentTokenIndex + 1) % config.spammer.tokens.length;
+    console.log(`[TOKEN] Switched to token ${currentTokenIndex + 1}`);
+    await client.login(config.spammer.tokens[currentTokenIndex]).catch(console.error);
+}
+
+// Patch sendSpam() to handle token rotation
+const originalSendSpam = sendSpam;
+sendSpam = async function(target, customMsg) {
+    try {
+        return await originalSendSpam(target, customMsg);
+    } catch (error) {
+        if (error.code === 50007 || error.code === 40001) { // Blocked or unauthorized
+            await rotateToken();
+        }
+        throw error;
+    }
+};
+
+// Initialize with first token
+if (config.spammer.tokens?.length > 0) {
+    client.login(config.spammer.tokens[0]).catch(console.error);
+} else {
+    client.login(config.spammer.token).catch(console.error);
+}
+
+// =====================
+// ERROR HANDLING
+// =====================
+process.on('unhandledRejection', error => {
+    console.error('Unhandled promise rejection:', error);
+});
+
+process.on('uncaughtException', error => {
+    console.error('Uncaught exception:', error);
+});
