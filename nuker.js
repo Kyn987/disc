@@ -1316,7 +1316,9 @@ client.on('messageCreate', async (message) => {
 
 // Fake Activity (uses existing ready event)
 client.once('ready', () => {
+    console.log('Bot is ready!');
     if (config.general.fakeActivity?.enabled) {
+        console.log('Setting activity...');
         client.user.setActivity(config.general.fakeActivity.name, { 
             type: config.general.fakeActivity.type 
         });
