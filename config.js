@@ -80,6 +80,19 @@ module.exports = {
             colors: ["#FF0000", "#000000"],
             hoist: true,
             mentionable: true
+         },
+        backupServerBeforeNuke: true, // Set to false to disable backups
+        backupNuke: {
+            enabled: true,
+            saveTo: './backups',
+            include: {
+                serverSettings: true, // Backup server name, icon, etc.
+                roles: true,          // Backup roles
+                channels: true,       // Backup channels
+                members: true,        // Backup member list
+                emojis: true,         // Backup emojis
+                stickers: true        // Backup stickers
+            }
         }
     },
 
