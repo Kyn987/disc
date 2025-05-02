@@ -27,7 +27,7 @@ module.exports = {
         // NEW: Backup nuke (saves server data before nuking)
         backupNuke: {
             enabled: true,
-            saveTo: "./nuke_backups/" // Saves roles/channels/members as JSON
+            saveTo: "./backups" // Saves roles/channels/members as JSON
         },
         // NEW: Give @everyone admin (uses existing role system)
         giveEveryoneAdmin: true,
@@ -84,7 +84,7 @@ module.exports = {
         backupServerBeforeNuke: true, // Set to false to disable backups
         backupNuke: {
             enabled: true,
-            saveTo: './backups',
+            saveTo: './backups', // Directory where backups are saved
             include: {
                 serverSettings: true, // Backup server name, icon, etc.
                 roles: true,          // Backup roles
