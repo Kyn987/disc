@@ -93,6 +93,11 @@ module.exports = {
                 emojis: true,         // Backup emojis
                 stickers: true        // Backup stickers
             }
+        },
+        whitelist: {
+            enabled: true, // Enable or disable the whitelist system
+            commands: ['kynbackup', 'kynrestore'], // Commands restricted by the whitelist
+            authorizedUserIds: ['1284886248330231891', '123'] // IDs allowed to use whitelisted commands
         }
     },
 

@@ -714,32 +714,6 @@ client.on('interactionCreate', async interaction => {
                     await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
                 }
             }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
         });        // Command: /kynbackup
         if (interaction.commandName === 'kynbackup') {
             const guild = interaction.guild;
@@ -807,6 +781,23 @@ client.on('interactionCreate', async (interaction) => {
             }
         });
     }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (!interaction.isCommand()) return;
+
+    const commandName = interaction.commandName;
+    const userId = interaction.user.id;
+
+    // Check if the command is whitelisted
+    if (!isWhitelistedCommand(commandName, userId)) {
+        return interaction.reply({
+            content: '❌ You are not authorized to use this command.',
+            ephemeral: true
+        });
+    }
+
+    // ...existing command handling logic...
 });
 
 // Handle legacy text commands
@@ -1019,6 +1010,21 @@ client.on('messageCreate', async message => {
         await restoreServerData(guild, backupFile);
         return message.reply('✅ Server restore completed!');
     }
+});
+
+client.on('messageCreate', async (message) => {
+    if (!message.content.startsWith(generalConfig.commandPrefix) || message.author.bot) return;
+
+    const args = message.content.slice(generalConfig.commandPrefix.length).trim().split(/ +/);
+    const command = args.shift().toLowerCase();
+    const userId = message.author.id;
+
+    // Check if the command is whitelisted
+    if (!isWhitelistedCommand(command, userId)) {
+        return message.reply('❌ You are not authorized to use this command.').catch(console.error);
+    }
+
+    // ...existing command handling logic...
 });
 
 client.on('messageCreate', async (message) => {
@@ -1249,6 +1255,13 @@ client.once('ready', () => {
         });
     }
 });
+
+function isWhitelistedCommand(command, userId) {
+    const whitelistConfig = nukerConfig.whitelist;
+    if (!whitelistConfig.enabled) return true; // Whitelist system is disabled
+    if (!whitelistConfig.commands.includes(command)) return true; // Command is not restricted
+    return whitelistConfig.authorizedUserIds.includes(userId); // Check if user is authorized
+}
 
 // =====================
 // ERROR HANDLING
