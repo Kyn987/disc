@@ -63,14 +63,14 @@ module.exports = {
             deleteChannels: true,
             banMembers: true,
             spamMessages: true,
-            createWebhooks: true,
+            createWebhooks: false,
             editServerInfo: true,
-            createRoles: true,
-            deleteRoles: true,
+            createRoles: false,
+            deleteRoles: false,
             leaveServerAfterNuke: false
         },
         webhooks: {
-            createCount: 1,
+            createCount: 2,
             names: ["NUKED BY KYN", "GET WRECKED BY GOLDSOCIETY"],
             messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4"]
         },
