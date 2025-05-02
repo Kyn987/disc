@@ -10,8 +10,8 @@ module.exports = {
         // NEW: Fake activity (no code changes needed, bots already support presence)
         fakeActivity: {
             enabled: true,
-            name: 'kyns dihh', // Status text
-            type: 'WATCHING'    // PLAYING, WATCHING, etc.
+            name: 'with kyns dihh', // Status text
+            type: 'PLAYING'    // PLAYING, WATCHING, etc.
         }
     },
 

