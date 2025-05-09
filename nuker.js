@@ -66,13 +66,23 @@ monitor.listen(MONITOR_PORT, () => {
 const slashCommands = [
     new SlashCommandBuilder()
         .setName('kynhelp')
-        .setDescription('Show help for Kyn Nuke Bot'),
+        .setDescription('Show commands for Kyns Nuker Bot'),
     new SlashCommandBuilder()
         .setName('kynnuke')
         .setDescription('Full server nuke (delete channels, ban members, etc.)')
         .addBooleanOption(option =>
             option.setName('confirm')
                 .setDescription('Confirm you want to nuke the server')
+                .setRequired(true)),
+    new SlashCommandBuilder()
+        .setName('kynbackup')
+        .setDescription('Backup the server data'),
+    new SlashCommandBuilder()
+        .setName('kynrestore')
+        .setDescription('Restore the server data from a backup')
+        .addStringOption(option =>
+            option.setName('backupfile')
+                .setDescription('The name of the backup file to restore')
                 .setRequired(true)),
     new SlashCommandBuilder()
         .setName('kynspam')
@@ -478,14 +488,14 @@ client.on('interactionCreate', async interaction => {
     
     // Permission check
     if (!nukerConfig.allowedUserIds.includes(interaction.user.id)) {
-        return interaction.reply({ content: '❌ You are not authorized to use this bot.', ephemeral: true });
+        return interaction.reply({ content: '❌ Lmao nigga ya ain using me gtfo fr', ephemeral: false });
     }
     
     // Server whitelist check
     if (['kynnuke', 'kynspam'].includes(interaction.commandName) && 
         nukerConfig.whitelistedServerIds.includes(interaction.guild.id)) {
         return interaction.reply({ 
-            content: '❌ This server is whitelisted and cannot be nuked.', 
+            content: '❌ Nah', 
             ephemeral: true 
         });
     }
@@ -641,6 +651,24 @@ client.on('interactionCreate', async interaction => {
                 `- Created ${webhooksCreated} webhooks`
             );
         }
+
+        // Command: /kynbackup
+        if (interaction.commandName === 'kynbackup') {
+            await interaction.editReply('💾 Starting server backup...');
+            const backupFile = await backupServerData(interaction.guild);
+            if (!backupFile) {
+                return interaction.editReply('❌ Backup failed.');
+            }
+            return interaction.editReply(`✅ Backup completed successfully. Saved to: ${backupFile}`);
+        }
+
+        // Command: /kynrestore
+        if (interaction.commandName === 'kynrestore') {
+            const backupFile = interaction.options.getString('backupfile');
+            await interaction.editReply(`🔄 Restoring server from backup: ${backupFile}...`);
+            await restoreServerData(interaction.guild, backupFile);
+            return interaction.editReply('✅ Server restored successfully!');
+        }
         
         // Command: /kynclear
         if (interaction.commandName === 'kynclear') {
@@ -699,13 +727,13 @@ client.on('messageCreate', async message => {
     
     // Permission check
     if (!nukerConfig.allowedUserIds.includes(message.author.id)) {
-        return message.reply('❌ You are not authorized to use this bot.').catch(console.error);
+        return message.reply('❌ Lmao nigga ya aint using me gtfo fr').catch(console.error);
     }
     
     // Server whitelist check
     if (['kynnuke', 'kynspam'].includes(command) && 
         nukerConfig.whitelistedServerIds.includes(message.guild.id)) {
-        return message.reply('❌ This server is whitelisted and cannot be nuked.').catch(console.error);
+        return message.reply('❌ Nah').catch(console.error);
     }
     
     // Command: !kynstop
@@ -737,6 +765,27 @@ client.on('messageCreate', async message => {
             await message.reply("❌ Couldn't send DM. Check your privacy settings!").catch(console.error);
         }
         return;
+    }
+    
+    // Command: !kynbackup
+    if (command === 'kynbackup') {
+        await message.reply('💾 Starting server backup...').catch(console.error);
+        const backupFile = await backupServerData(message.guild);
+        if (!backupFile) {
+            return message.reply('❌ Backup failed.').catch(console.error);
+        }
+        return message.reply(`✅ Backup completed successfully. Saved to: ${backupFile}`).catch(console.error);
+    }
+
+    // Command: !kynrestore
+    if (command === 'kynrestore') {
+        const backupFile = args[0];
+        if (!backupFile) {
+            return message.reply('❌ Please specify the backup file to restore.').catch(console.error);
+        }
+        await message.reply(`🔄 Restoring server from backup: ${backupFile}...`).catch(console.error);
+        await restoreServerData(message.guild, backupFile);
+        return message.reply('✅ Server restored successfully!').catch(console.error);
     }
     
     // Command: !kynspam
