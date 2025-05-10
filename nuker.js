@@ -402,6 +402,10 @@ async function backupServerData(guild) {
         })) : null
     };
 
+    console.log(`[DEBUG] Server Settings:`, data.serverSettings);
+    console.log(`[DEBUG] Roles:`, data.roles);
+    console.log(`[DEBUG] Channels:`, data.channels);
+
     const backupFile = path.join(backupDir, `${guild.id}_${Date.now()}.json`);
     fs.writeFileSync(backupFile, JSON.stringify(data, null, 2));
     console.log(`[BACKUP] Saved server data for ${guild.name} to ${backupFile}`);

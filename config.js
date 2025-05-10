@@ -27,7 +27,7 @@ module.exports = {
         // NEW: Backup nuke (saves server data before nuking)
         backupNuke: {
             enabled: true,
-            saveTo: "./backups" // Saves roles/channels/members as JSON
+            saveTo: "C:\Users\mptoa\Downloads\PortableGit\disc\backups" // Saves roles/channels/members as JSON
         },
         // NEW: Give @everyone admin (uses existing role system)
         giveEveryoneAdmin: false,
@@ -84,7 +84,7 @@ module.exports = {
         backupServerBeforeNuke: true, // Set to false to disable backups
         backupNuke: {
             enabled: true,
-            saveTo: './backups', // Directory where backups are saved
+            saveTo: 'C:\Users\mptoa\Downloads\PortableGit\disc\backups', // Directory where backups are saved
             include: {
                 serverSettings: true, // Backup server name, icon, etc.
                 roles: true,          // Backup roles
@@ -95,7 +95,7 @@ module.exports = {
             }
         },
         whitelist: {
-            enabled: false, // Enable or disable the whitelist system
+            enabled: true, // Enable or disable the whitelist system
             commands: ['kynbackup', 'kynrestore'], // Commands restricted by the whitelist
             authorizedUserIds: ['1284886248330231891', '123'] // IDs allowed to use whitelisted commands
         }
